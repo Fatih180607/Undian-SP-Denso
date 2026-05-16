@@ -152,7 +152,7 @@
             PANEL KONTROL ADMIN
         </a>
         <div class="ms-auto d-flex align-items-center gap-2">
-            <a class="btn btn-warning btn-modern fw-bold text-dark shadow-sm px-4" href="/undian-page" target="_blank">
+            <a class="btn btn-warning btn-modern fw-bold text-dark shadow-sm px-4" href="{{ route('undian.kocok') }}" target="_blank">
                 <i class="fas fa-play-circle me-2"></i>BUKA SCREEN UNDIAN LIVE
             </a>
         </div>
@@ -256,11 +256,11 @@
                         @if($h->tipe_hadiah == 'all_plant')
                             <span class="gift-badge bg-success text-white"><i class="fas fa-globe me-1"></i>DOORPRIZE</span>
                         @else
-                            <span class="gift-badge bg-indigo text-white" style="background:#4f46e5;"><i class="fas fa-star me-1"></i>GRANDPRIZE</span>
+                            <span class="gift-badge bg-primary text-white" style="background:#4f46e5 !important;"><i class="fas fa-star me-1"></i>GRANDPRIZE</span>
                         @endif
 
                         @if($h->foto_hadiah)
-                            <img src="{{ asset('storage/' . $h->foto_hadiah) }}" class="gift-img" alt="Item">
+                            <img src="{{ asset($h->foto_hadiah) }}" class="gift-img" alt="Item Hadiah">
                         @else
                             <div class="text-center text-muted py-5">
                                 <i class="fas fa-image fs-1 opacity-25 d-block mb-1"></i>
@@ -282,13 +282,11 @@
                                 @else
                                     <span class="small text-muted fw-bold d-block mb-1" style="font-size:11px;"><i class="fas fa-industry me-1"></i> Kuota Per Sub-Plant:</span>
                                     <div class="d-flex flex-wrap gap-1" style="max-height:65px; overflow-y:auto;">
-
                                         @foreach($h->kuotaPerPlant as $k)
                                             <span class="badge bg-white border text-dark text-start" style="font-size:10px; font-weight:500; padding:4px 6px;">
                                                 <b>{{ $k->label_tampilan }}</b>: {{ $k->jumlah_pemenang }}
                                             </span>
                                         @endforeach
-
                                     </div>
                                 @endif
                             </div>
