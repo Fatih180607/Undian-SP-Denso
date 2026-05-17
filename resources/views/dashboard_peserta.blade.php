@@ -151,7 +151,13 @@
             </span>
             PANEL KONTROL ADMIN
         </a>
-        <div class="ms-auto d-flex align-items-center gap-2">
+        <div class="ms-auto d-flex align-items-center gap-2"><li class="nav-item d-inline-block mx-2">
+    <a href="{{ route('plants.index') }}"
+       class="btn {{ Request::is('plants*') ? 'btn-primary' : 'btn-secondary' }}">
+        <i class="fas fa-industry"></i>
+        <span>Setting Plant</span>
+    </a>
+</li>
             <a class="btn btn-warning btn-modern fw-bold text-dark shadow-sm px-4" href="{{ route('undian.kocok') }}" target="_blank">
                 <i class="fas fa-play-circle me-2"></i>BUKA SCREEN UNDIAN LIVE
             </a>
@@ -171,8 +177,8 @@
     <div class="main-card">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <div>
-                <h5 class="fw-bold text-dark mb-1"><i class="fas fa-users text-muted me-2"></i>Database Master Peserta</h5>
-                <p class="text-muted small mb-0">Kelola informasi karyawan, status pemenang, serta import berkas massal.</p>
+                <h5 class="fw-bold text-dark mb-1"><i class="fas fa-users text-muted me-2"></i>Data Peserta</h5>
+                <p class="text-muted small mb-0">Informasi Peserta, status pemenang.</p>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button class="btn btn-light btn-modern border text-secondary" data-bs-toggle="modal" data-bs-target="#modalImportCSV">
@@ -276,8 +282,7 @@
                             <div class="gift-meta-box">
                                 @if($h->tipe_hadiah == 'all_plant')
                                     <div class="small text-success fw-bold d-flex align-items-center justify-content-between">
-                                        <span><i class="fas fa-layer-group me-1"></i> Kuota Global:</span>
-                                        <span class="fs-6">{{ $h->total_kuota_global }} Unit</span>
+                                        <span><i class="fas fa-layer-group me-1"></i> Jumlah: {{ $h->total_kuota_global }}</span>
                                     </div>
                                 @else
                                     <span class="small text-muted fw-bold d-block mb-1" style="font-size:11px;"><i class="fas fa-industry me-1"></i> Kuota Per Sub-Plant:</span>

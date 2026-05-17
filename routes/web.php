@@ -45,3 +45,5 @@ Route::post('/undian/proses', [UndianController::class, 'prosesKocok'])->name('u
 
 // Route Gacha Borongan
 Route::post('/undi/proses-borongan', [UndianController::class, 'LogikaUndianBorongan'])->name('undi.borongan');
+
+Route::resource('plants', PlantController::class);
