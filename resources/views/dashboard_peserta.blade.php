@@ -7,6 +7,7 @@
     <title>Dashboard Admin - Undian Digital</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="{{ asset('images/Logo_SPDNIA.png') }}">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -146,21 +147,25 @@
 <nav class="navbar navbar-expand-lg navbar-dark navbar-custom py-3 shadow-sm mb-4">
     <div class="container">
         <a class="navbar-brand fw-bold text-white d-flex align-items-center" href="#">
-            <span class="p-2 bg-primary rounded-3 me-2 d-flex align-items-center justify-content-center" style="width:35px; height:35px;">
-                <i class="fas fa-user-shield text-white" style="font-size: 16px;"></i>
+            <span class="me-3 d-flex align-items-center justify-content-center" style="width:55px; height:55px;">
+                <img src="{{ asset('images/logo_Spdnia.png') }}" alt="Logo Spdnia" style="width: 100%; height: 100%; object-fit: contain;">
             </span>
-            PANEL KONTROL ADMIN
+            <span class="me-3 d-flex align-items-center justify-content-center" style="width:55px; height:55px;">
+                <img src="{{ asset('images/logo_23TH.png') }}" alt="Logo 23TH" style="width: 100%; height: 100%; object-fit: contain;">
+            </span>
+            DASHBOARD PESERTA & HADIAH
         </a>
-        <div class="ms-auto d-flex align-items-center gap-2"><li class="nav-item d-inline-block mx-2">
-    <a href="{{ route('plants.index') }}"
-       class="btn {{ Request::is('plants*') ? 'btn-primary' : 'btn-secondary' }}">
-        <i class="fas fa-industry"></i>
-        <span>Setting Plant</span>
-    </a>
-</li>
-            <a class="btn btn-warning btn-modern fw-bold text-dark shadow-sm px-4" href="{{ route('undian.kocok') }}" target="_blank">
-                <i class="fas fa-play-circle me-2"></i>BUKA SCREEN UNDIAN LIVE
-            </a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+            <li class="nav-item d-inline-block mx-2">
+                <a href="{{ route('plants.index') }}"
+                   class="btn {{ Request::is('plants*') ? 'btn-primary' : 'btn-secondary' }}">
+                    <i class="fas fa-industry"></i>
+                    <span>Setting Plant</span>
+                </a>
+            </li>
+          <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalPilihHadiahLive">
+    <i class="fas fa-play-circle me-1"></i> Buka Undian Secara Live
+</button>
         </div>
     </div>
 </nav>
@@ -185,7 +190,7 @@
                     <i class="fas fa-file-csv text-success me-1"></i> Import CSV
                 </button>
                 <button class="btn btn-modern btn-modern-primary" data-bs-toggle="modal" data-bs-target="#modalTambahPeserta">
-                    <i class="fas fa-user-plus me-1"></i> Tambah Karyawan
+                    <i class="fas fa-user-plus me-1"></i> Tambah Peserta
                 </button>
                 <form action="{{ route('peserta.reset') }}" method="POST" onsubmit="return confirm('Kembalikan semua status menjadi Belum Menang?')" class="d-inline">
                     @csrf
@@ -203,11 +208,11 @@
                 <thead>
                     <tr>
                         <th class="ps-3" width="120">NPK</th>
-                        <th>Nama Karyawan</th>
+                        <th>Nama</th>
                         <th>Seksi / Departemen</th>
                         <th>Plant Terdaftar</th>
                         <th class="text-center" width="120">Status Undian</th>
-                        <th class="text-center" width="80">Aksi</th>
+                        <th class="text-center" width="100">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -225,10 +230,24 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <form action="{{ route('peserta.destroy', $p->id) }}" method="POST" class="d-inline">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="action-icon action-delete" onclick="return confirm('Hapus karyawan ini?')"><i class="fas fa-trash-alt"></i></button>
-                            </form>
+                            <div class="d-flex justify-content-center gap-1">
+                                <button type="button" class="action-icon action-edit btn-edit-peserta"
+                                        data-id="{{ $p->id }}"
+                                        data-npk="{{ $p->npk }}"
+                                        data-nama="{{ $p->nama_karyawan }}"
+                                        data-seksi="{{ $p->seksi }}"
+                                        data-plant="{{ $p->plant }}"
+                                        title="Edit Peserta">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+
+                                <form action="{{ route('peserta.destroy', $p->id) }}" method="POST" class="d-inline">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="action-icon action-delete" onclick="return confirm('Hapus karyawan ini?')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                     @empty
@@ -250,7 +269,7 @@
                 <p class="text-muted small mb-0">Daftar item doorprize & grandprize lengkap beserta konfigurasi kuotanya.</p>
             </div>
             <button class="btn btn-modern btn-modern-primary" data-bs-toggle="modal" data-bs-target="#modalTambahHadiah">
-                <i class="fas fa-plus-circle me-1"></i> Buat Master Hadiah
+                <i class="fas fa-plus-circle me-1"></i> Tambah Hadiah
             </button>
         </div>
 
@@ -303,6 +322,9 @@
                                 <button class="btn btn-sm btn-light border text-primary px-2 btnUpdateHadiahModal"
                                         data-id="{{ $h->id }}"
                                         data-nama="{{ $h->nama_hadiah }}"
+                                        data-tipe="{{ $h->tipe_hadiah }}"
+                                        data-kuotaglobal="{{ $h->total_kuota_global }}"
+                                        data-kuotaperplant="{{ json_encode($h->kuotaPerPlant) }}"
                                         data-bs-toggle="modal" data-bs-target="#modalEditHadiah" title="Edit Data">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -331,14 +353,14 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header bg-dark text-white border-0 py-3">
-                <h6 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-warning"></i>Tambah Karyawan Manual</h6>
+                <h6 class="modal-title fw-bold"><i class="fas fa-user-plus me-2 text-warning"></i>Tambah Peserta</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ route('peserta.store') }}" method="POST">
                 @csrf
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">NPK Karyawan</label>
+                        <label class="form-label small fw-bold text-secondary">NPK</label>
                         <input type="text" name="npk" class="form-control" placeholder="Masukkan NPK" required>
                     </div>
                     <div class="mb-3">
@@ -362,6 +384,48 @@
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary btn-modern" data-bs-dismiss="modal">Batal</button>
                     <button type="submit" class="btn btn-modern btn-modern-primary px-4">Simpan Peserta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEditPeserta" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-dark text-white border-0 py-3">
+                <h6 class="modal-title fw-bold"><i class="fas fa-user-edit text-primary me-2"></i>Edit Informasi Karyawan</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="formEditPeserta" action="" method="POST">
+                @csrf
+                @method('PUT')
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">NPK Karyawan</label>
+                        <input type="text" id="editNpkPeserta" name="npk" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Nama Lengkap</label>
+                        <input type="text" id="editNamaPeserta" name="nama_karyawan" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Seksi / Departemen</label>
+                        <input type="text" id="editSeksiPeserta" name="seksi" class="form-control" required>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small fw-bold text-secondary">Plant / Unit Lokasi</label>
+                        <select id="editPlantPeserta" name="plant" class="form-select" required>
+                            <option value="">-- Pilih Plant --</option>
+                            @foreach($plants as $pl)
+                                <option value="{{ $pl->nama_plant }}">{{ $pl->nama_plant }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary btn-modern" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary btn-modern px-4">Update Peserta</button>
                 </div>
             </form>
         </div>
@@ -396,49 +460,45 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header bg-dark text-white border-0 py-3">
-                <h6 class="modal-title fw-bold"><i class="fas fa-box-open text-warning me-2"></i>Form Pembuatan Master Hadiah</h6>
+                <h6 class="modal-title fw-bold"><i class="fas fa-box-open text-warning me-2"></i>Tambah Hadiah</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form action="{{ route('hadiah.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Nama Item/Produk Hadiah</label>
-                        <input type="text" name="nama_hadiah" class="form-control" placeholder="Contoh: KULKAS SHARP 2 PINTU" required>
+                        <label class="form-label small fw-bold text-secondary">Nama Item Hadiah</label>
+                        <input type="text" name="nama_hadiah" class="form-control" placeholder="Contoh: Sepeda Motor Honda" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Foto Gambar Hadiah</label>
-                        <input type="file" name="foto_hadiah" class="form-control" accept="image/*" required>
+                        <label class="form-label small fw-bold text-secondary">Tipe Undian / Distribusi</label>
+                        <select id="selectTipeHadiah" name="tipe_hadiah" class="form-select" required>
+                            <option value="all_plant">DOORPRIZE (Kuota Global / Acak Semua Plant)</option>
+                            <option value="per_plant">GRANDPRIZE (Spesifik Batasan per Sub-Plant)</option>
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary d-block mb-2">Metode Distribusi Acak</label>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipe_hadiah" id="addTipeAll" value="all_plant" checked onclick="toggleAddSkema()">
-                            <label class="form-check-label small fw-bold text-success" for="addTipeAll">Doorprize (All Plant)</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="tipe_hadiah" id="addTipePer" value="per_plant" onclick="toggleAddSkema()">
-                            <label class="form-check-label small fw-bold text-primary" for="addTipePer">Grandprize (Per Plant)</label>
-                        </div>
+                        <label class="form-label small fw-bold text-secondary">Foto/Gambar Produk</label>
+                        <input type="file" name="foto_hadiah" class="form-control" accept="image/*">
                     </div>
 
-                    <div id="addPanelAllPlant" class="p-3 bg-light rounded-3 border border-success mb-2">
-                        <label class="form-label small fw-bold text-success">Total Kuota Pemenang</label>
-                        <input type="number" name="total_kuota_global" class="form-control" value="1" min="1">
+                    <div id="panelAllPlant" class="mb-2">
+                        <label class="form-label small fw-bold text-success"><i class="fas fa-layer-group me-1"></i>Total Kuota Pemenang</label>
+                        <input type="number" id="inputTotalKuotaGlobal" name="total_kuota_global" class="form-control" placeholder="Masukkan total unit hadiah" value="1">
                     </div>
 
-                    <div id="addPanelPerPlant" class="d-none" style="max-height: 220px; overflow-y: auto;">
-                        <span class="small fw-bold text-muted d-block mb-2">Atur Kuota Sub-Plant:</span>
-                        @foreach($plants as $index => $pl)
+                    <div id="panelPerPlant" class="d-none" style="max-height: 250px; overflow-y: auto;">
+                        <label class="form-label small fw-bold text-primary mb-2"><i class="fas fa-industry me-1"></i>Set Batasan Pemenang per Plant</label>
+                        @foreach($plants as $pl)
                         <div class="p-2 bg-light rounded-3 border border-primary mb-2">
                             <span class="badge bg-primary mb-1">{{ $pl->nama_plant }}</span>
-                            <input type="hidden" name="kuota[{{ $index }}][plant]" value="{{ $pl->nama_plant }}">
+                            <input type="hidden" name="kuota[{{ $pl->nama_plant }}][plant]" value="{{ $pl->nama_plant }}">
                             <div class="row g-2">
                                 <div class="col-8">
-                                    <input type="text" name="kuota[{{ $index }}][label]" class="form-control form-control-sm" value="{{ $pl->nama_plant }}">
+                                    <input type="text" name="kuota[{{ $pl->nama_plant }}][label]" class="form-control form-control-sm" value="{{ $pl->nama_plant }}" placeholder="Label Tampilan">
                                 </div>
                                 <div class="col-4">
-                                    <input type="number" name="kuota[{{ $index }}][jumlah]" class="form-control form-control-sm" value="0" min="0">
+                                    <input type="number" name="kuota[{{ $pl->nama_plant }}][jumlah]" class="form-control form-control-sm input-kuota-plant" placeholder="Qty" min="0" value="0">
                                 </div>
                             </div>
                         </div>
@@ -447,7 +507,7 @@
                 </div>
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary btn-modern" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-modern btn-modern-primary px-4">Simpan Data</button>
+                    <button type="submit" class="btn btn-primary px-4">Simpan Master Hadiah</button>
                 </div>
             </form>
         </div>
@@ -458,7 +518,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header bg-dark text-white border-0 py-3">
-                <h6 class="modal-title fw-bold"><i class="fas fa-edit text-primary me-2"></i>Edit Informasi Master Hadiah</h6>
+                <h6 class="modal-title fw-bold"><i class="fas fa-box-open text-primary me-2"></i>Update Konfigurasi Hadiah</h6>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="formEditHadiah" action="" method="POST" enctype="multipart/form-data">
@@ -466,12 +526,50 @@
                 @method('PUT')
                 <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Nama Item/Produk Hadiah</label>
+                        <label class="form-label small fw-bold text-secondary">Nama Item Hadiah</label>
                         <input type="text" id="editNamaHadiah" name="nama_hadiah" class="form-control" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-secondary">Ganti Foto Baru (Kosongkan jika tidak ingin diubah)</label>
+                        <label class="form-label small fw-bold text-secondary">Tipe Undian</label>
+
+                        <select id="editTipeHadiah" class="form-select" disabled style="background-color: #e9ecef;">
+                            <option value="all_plant">DOORPRIZE (Kuota Global)</option>
+                            <option value="per_plant">GRANDPRIZE (Kuota Per Sub-Plant)</option>
+                        </select>
+
+                        <input type="hidden" id="editTipeHadiahHidden" name="tipe_hadiah">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Ganti Foto/Gambar (Opsional)</label>
                         <input type="file" name="foto_hadiah" class="form-control" accept="image/*">
+                    </div>
+
+                    <div id="editPanelAllPlant" class="mb-2 d-none">
+                        <label class="form-label small fw-bold text-success"><i class="fas fa-layer-group me-1"></i>Total Kuota Pemenang</label>
+                        <input type="number" id="editTotalKuotaGlobal" name="total_kuota_global" class="form-control" min="0">
+                    </div>
+
+                    <div id="editPanelPerPlant" class="d-none" style="max-height: 220px; overflow-y: auto;">
+                        <span class="small fw-bold text-muted d-block mb-2"><i class="fas fa-industry me-1"></i>Atur Ulang Kuota Sub-Plant:</span>
+                        @foreach($plants as $pl)
+                        @php
+                            $cleanId = str_replace(' ', '_', $pl->nama_plant);
+                        @endphp
+                        <div class="p-2 bg-light rounded-3 border border-primary mb-2">
+                            <span class="badge bg-primary mb-1">{{ $pl->nama_plant }}</span>
+
+                            <input type="hidden" name="kuota[{{ $pl->nama_plant }}][plant]" value="{{ $pl->nama_plant }}">
+
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <input type="text" id="editLabelPlant_{{ $cleanId }}" name="kuota[{{ $pl->nama_plant }}][label]" class="form-control form-control-sm" value="{{ $pl->nama_plant }}">
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" id="editJumlahPlant_{{ $cleanId }}" name="kuota[{{ $pl->nama_plant }}][jumlah]" class="form-control form-control-sm" min="0">
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0">
@@ -487,25 +585,133 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    function toggleAddSkema() {
-        const isAll = document.getElementById('addTipeAll').checked;
-        if(isAll) {
-            document.getElementById('addPanelAllPlant').classList.remove('d-none');
-            document.getElementById('addPanelPerPlant').classList.add('d-none');
-        } else {
-            document.getElementById('addPanelAllPlant').classList.add('d-none');
-            document.getElementById('addPanelPerPlant').classList.remove('d-none');
-        }
-    }
+$(document).ready(function() {
 
-    $(document).ready(function() {
-        $('.btnUpdateHadiahModal').on('click', function() {
-            var id = $(this).data('id');
-            var nama = $(this).data('nama');
-            $('#editNamaHadiah').val(nama);
-            $('#formEditHadiah').attr('action', '/hadiah/update/' + id);
-        });
+    // Toggle visibilitas input kuota saat memilih tipe hadiah (Modal Tambah)
+    $('#selectTipeHadiah').on('change', function() {
+        if ($(this).val() === 'all_plant') {
+            $('#panelAllPlant').removeClass('d-none');
+            $('#panelPerPlant').addClass('d-none');
+            $('#inputTotalKuotaGlobal').val(1);
+        } else {
+            $('#panelAllPlant').addClass('d-none');
+            $('#panelPerPlant').removeClass('d-none');
+            $('#inputTotalKuotaGlobal').val(0); // Aman diset 0 karena min="1" sudah dihapus dari HTML
+        }
     });
+
+    // Handler klik Edit Peserta Karyawan
+    $('.btn-edit-peserta').on('click', function() {
+        var id = $(this).data('id');
+        $('#editNpkPeserta').val($(this).data('npk'));
+        $('#editNamaPeserta').val($(this).data('nama'));
+        $('#editSeksiPeserta').val($(this).data('seksi'));
+        $('#editPlantPeserta').val($(this).data('plant'));
+        $('#formEditPeserta').attr('action', '/peserta/update/' + id);
+        $('#modalEditPeserta').modal('show');
+    });
+
+    // Handler klik Edit Hadiah (Sinkronisasi payload JSON ke dalam field sub-plant)
+    $('.btnUpdateHadiahModal').on('click', function() {
+        var id = $(this).data('id');
+        var nama = $(this).data('nama');
+        var tipe = $(this).data('tipe');
+        var kuotaGlobal = $(this).data('kuotaglobal');
+        var kuotaPerPlant = $(this).data('kuotaperplant');
+
+        $('#editPanelAllPlant').addClass('d-none');
+        $('#editPanelPerPlant').addClass('d-none');
+
+        $('#editNamaHadiah').val(nama);
+        $('#editTipeHadiah').val(tipe);
+        $('#editTipeHadiahHidden').val(tipe);
+        $('#formEditHadiah').attr('action', '/hadiah/update/' + id);
+
+        if (tipe === 'all_plant') {
+            $('#editPanelAllPlant').removeClass('d-none');
+            $('#editTotalKuotaGlobal').val(kuotaGlobal);
+        } else {
+            $('#editPanelPerPlant').removeClass('d-none');
+            $('#editTotalKuotaGlobal').val(0);
+
+            $('input[id^="editJumlahPlant_"]').val(0);
+
+            if (typeof kuotaPerPlant === 'string') {
+                try { kuotaPerPlant = JSON.parse(kuotaPerPlant); } catch (e) { console.error(e); }
+            }
+
+            if (kuotaPerPlant && kuotaPerPlant.length > 0) {
+                kuotaPerPlant.forEach(function(item) {
+                    var namaPlantRaw = item.target_plant;
+                    if (namaPlantRaw) {
+                        var plantIdClean = namaPlantRaw.replace(/ /g, '_');
+                        $('#editLabelPlant_' + plantIdClean).val(item.label_tampilan || namaPlantRaw);
+                        $('#editJumlahPlant_' + plantIdClean).val(item.jumlah_pemenang || 0);
+                    }
+                });
+            }
+        }
+    });
+});
 </script>
+<div class="modal fade" id="modalPilihHadiahLive" tabindex="-1" aria-labelledby="modalPilihHadiahLiveLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md"> <div class="modal-content border-0 shadow-lg" style="border-radius: 12px;">
+
+            <div class="modal-header border-bottom-0 pt-4 px-4 pb-2">
+                <h5 class="modal-title fw-bold text-dark" id="modalPilihHadiahLiveLabel" style="font-size: 1.25rem; letter-spacing: -0.3px;">
+                    Pilih Kategori Hadiah
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="font-size: 0.8rem;"></button>
+            </div>
+
+            <div class="modal-body px-4 pb-4 pt-1">
+                <p class="text-muted small mb-4">Pilih salah satu hadiah untuk diundi.</p>
+
+                <div class="d-flex flex-column gap-2">
+                    @isset($hadiah)
+                        @foreach($hadiah as $item)
+                            @php
+                                // Hitung kuota presisi untuk tampilan list
+                                $kuotaItem = ($item->tipe_hadiah == 'all_plant')
+                                    ? $item->total_kuota_global
+                                    : $item->kuotaPerPlant->sum('jumlah_pemenang');
+                            @endphp
+
+                            <div class="card border border-light-subtle shadow-sm px-3 py-2" style="border-radius: 8px; transition: all 0.2s ease;">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+
+                                    <div style="max-width: 65%;">
+                                        <div class="fw-semibold text-dark text-truncate" title="{{ $item->nama_hadiah }}" style="font-size: 0.95rem;">
+                                            {{ $item->nama_hadiah }}
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mt-1">
+                                            <span class="text-muted" style="font-size: 0.8rem;">
+                                                {{ $item->tipe_hadiah == 'all_plant' ? 'All Plant' : 'Per Plant' }}
+                                            </span>
+                                            <span class="text-secondary" style="font-size: 0.8rem;">•</span>
+                                            <span class="text-dark fw-medium" style="font-size: 0.8rem;">
+                                                Jumlah Hadiah: {{ $kuotaItem }} Pcs
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <a href="{{ route('undian.kocok', $item->id) }}" target="_blank" class="btn btn-dark btn-sm px-3 fw-medium" style="font-size: 0.8rem; border-radius: 6px;">
+                                            Undi Sekarang <i class="fas fa-arrow-right ms-1" style="font-size: 0.75rem;"></i>
+                                        </a>
+                                    </div>
+
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="text-center text-muted small py-4">Belum ada kategori hadiah tersedia.</div>
+                    @endisset
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
 </body>
 </html>

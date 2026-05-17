@@ -67,12 +67,26 @@ class PesertaController extends Controller
         return back()->with('success', 'Karyawan baru berhasil ditambahkan manual!');
     }
 
-    public function update(Request $request, $id)
-    {
-        $peserta = Peserta::findOrFail($id);
-        $peserta->update($request->only(['npk', 'nama_karyawan', 'seksi', 'plant', 'is_winner']));
-        return back()->with('success', 'Data karyawan berhasil diperbarui!');
-    }
+public function update(Request $request, $id)
+{
+    $request->validate([
+        'npk' => 'required',
+        'nama_karyawan' => 'required',
+        'seksi' => 'required',
+        'plant' => 'required',
+    ]);
+
+    // Cari peserta berdasarkan ID dan update datanya
+    $peserta = \App\Models\Peserta::findOrFail($id); // Sesuaikan nama model pesertamu
+    $peserta->update([
+        'npk' => $request->npk,
+        'nama_karyawan' => $request->nama_karyawan,
+        'seksi' => $request->seksi,
+        'plant' => $request->plant,
+    ]);
+
+    return redirect()->back()->with('success', 'Data peserta berhasil diperbarui!');
+}
 
     public function destroy($id)
     {
