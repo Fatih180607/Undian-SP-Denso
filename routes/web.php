@@ -54,3 +54,4 @@ Route::post('/undian/proses', [UndianController::class, 'prosesKocok'])->name('u
 Route::post('/undi/proses-borongan', [UndianController::class, 'LogikaUndianBorongan'])->name('undi.borongan');
 Route::post('/api/undian/proses-kocok', [UndianController::class, 'prosesKocok']);
 Route::get('/undian-page', [UndianController::class, 'halamanKocok'])->name('undian.kocok_page_lama');
+
