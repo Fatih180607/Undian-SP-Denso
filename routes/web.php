@@ -55,3 +55,8 @@ Route::post('/undi/proses-borongan', [UndianController::class, 'LogikaUndianBoro
 Route::post('/api/undian/proses-kocok', [UndianController::class, 'prosesKocok']);
 Route::get('/undian-page', [UndianController::class, 'halamanKocok'])->name('undian.kocok_page_lama');
 
+// Route untuk putaran teks acak bayangan
+Route::post('/undian/kocok-proses', [UndianController::class, 'kocokProses'])->name('undian.proses_kocok_proses');
+
+// Route Utama pengundian sesuai kuota
+Route::post('/api/undian/proses-kocok-kuota', [UndianController::class, 'kocokSesuaiKuota'])->name('api.undian.kocok_kuota');
