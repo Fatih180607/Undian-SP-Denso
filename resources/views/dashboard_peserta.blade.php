@@ -179,88 +179,149 @@
         </div>
     @endif
 
-    <div class="main-card">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-            <div>
-                <h5 class="fw-bold text-dark mb-1"><i class="fas fa-users text-muted me-2"></i>Data Peserta</h5>
-                <p class="text-muted small mb-0">Informasi Peserta, status pemenang.</p>
-            </div>
-            <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-light btn-modern border text-secondary" data-bs-toggle="modal" data-bs-target="#modalImportCSV">
-                    <i class="fas fa-file-csv text-success me-1"></i> Import CSV
-                </button>
-                <button class="btn btn-modern btn-modern-primary" data-bs-toggle="modal" data-bs-target="#modalTambahPeserta">
-                    <i class="fas fa-user-plus me-1"></i> Tambah Peserta
-                </button>
-                <form action="{{ route('peserta.reset') }}" method="POST" onsubmit="return confirm('Kembalikan semua status menjadi Belum Menang?')" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-light btn-modern border text-warning"><i class="fas fa-history me-1"></i> Reset Status</button>
-                </form>
-                <form action="{{ route('peserta.deleteAll') }}" method="POST" onsubmit="return confirm('Hapus bersih seluruh data peserta dari sistem?')" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-light btn-modern border text-danger"><i class="fas fa-trash-alt me-1"></i> Kosongkan</button>
-                </form>
-            </div>
+<div class="main-card">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h5 class="fw-bold text-dark mb-1"><i class="fas fa-users text-muted me-2"></i>Data Peserta</h5>
+            <p class="text-muted small mb-0">Informasi Peserta, status pemenang.</p>
         </div>
-
-        <div class="table-container">
-            <table class="table table-hover align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th class="ps-3" width="120">NPK</th>
-                        <th>Nama</th>
-                        <th>Seksi / Departemen</th>
-                        <th>Plant Terdaftar</th>
-                        <th class="text-center" width="120">Status Undian</th>
-                        <th class="text-center" width="100">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($peserta as $p)
-                    <tr>
-                        <td class="fw-bold ps-3 text-secondary">{{ $p->npk }}</td>
-                        <td class="fw-semibold text-dark">{{ $p->nama_karyawan }}</td>
-                        <td>{{ $p->seksi }}</td>
-                        <td><span class="badge bg-light border text-secondary px-2 py-1 rounded">{{ $p->plant }}</span></td>
-                        <td class="text-center">
-                            @if($p->is_winner)
-                                <span class="badge badge-status bg-success-subtle text-success border border-success"><i class="fas fa-trophy me-1"></i> MENANG</span>
-                            @else
-                                <span class="badge badge-status bg-light text-muted border text-uppercase">Ready</span>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <div class="d-flex justify-content-center gap-1">
-                                <button type="button" class="action-icon action-edit btn-edit-peserta"
-                                        data-id="{{ $p->id }}"
-                                        data-npk="{{ $p->npk }}"
-                                        data-nama="{{ $p->nama_karyawan }}"
-                                        data-seksi="{{ $p->seksi }}"
-                                        data-plant="{{ $p->plant }}"
-                                        title="Edit Peserta">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-
-                                <form action="{{ route('peserta.destroy', $p->id) }}" method="POST" class="d-inline">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="action-icon action-delete" onclick="return confirm('Hapus karyawan ini?')">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="text-center text-muted py-5 small">
-                            <i class="fas fa-folder-open d-block fs-3 text-slate-300 mb-2"></i> Data peserta kosong. Gunakan fitur Tambah Manual atau Import CSV.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-light btn-modern border text-secondary" data-bs-toggle="modal" data-bs-target="#modalImportCSV">
+                <i class="fas fa-file-csv text-success me-1"></i> Import CSV
+            </button>
+            <button class="btn btn-modern btn-modern-primary" data-bs-toggle="modal" data-bs-target="#modalTambahPeserta">
+                <i class="fas fa-user-plus me-1"></i> Tambah Peserta
+            </button>
+            <form action="{{ route('peserta.reset') }}" method="POST" onsubmit="return confirm('Kembalikan semua status menjadi Belum Menang?')" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-light btn-modern border text-warning"><i class="fas fa-history me-1"></i> Reset Status</button>
+            </form>
+            <form action="{{ route('peserta.deleteAll') }}" method="POST" onsubmit="return confirm('Hapus bersih seluruh data peserta dari sistem?')" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-light btn-modern border text-danger"><i class="fas fa-trash-alt me-1"></i> Kosongkan</button>
+            </form>
         </div>
     </div>
+
+    <div class="p-3 bg-light rounded-3 mb-4 border">
+        <form action="{{ request()->url() }}" method="GET" class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+                <label class="form-label small fw-bold text-secondary mb-1">Cari Peserta</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                    <input type="text" name="search" class="form-control border-start-0 ps-0" placeholder="Ketik NPK atau Nama..." value="{{ request('search') }}">
+                </div>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label small fw-bold text-secondary mb-1">Filter Plant</label>
+<select name="plant" class="form-control">
+    <option value="">SEMUA PLANT</option>
+    @if(isset($plants) && $plants->count() > 0)
+        @foreach($plants as $pl)
+            <option value="{{ $pl->nama_plant }}" {{ request('plant') == $pl->nama_plant ? 'selected' : '' }}>
+                {{ $pl->nama_plant }}
+            </option>
+        @endforeach
+    @else
+        <option value="BEKASI" {{ request('plant') == 'BEKASI' ? 'selected' : '' }}>BEKASI</option>
+        <option value="SUNTER" {{ request('plant') == 'SUNTER' ? 'selected' : '' }}>SUNTER</option>
+        <option value="FAJAR" {{ request('plant') == 'FAJAR' ? 'selected' : '' }}>FAJAR</option>
+        <option value="TACI" {{ request('plant') == 'TACI' ? 'selected' : '' }}>TACI</option>
+    @endif
+</select>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label small fw-bold text-secondary mb-1">Status Undian</label>
+                <select name="status" class="form-select">
+                    <option value="">Semua Status</option>
+                    <option value="ready" {{ request('status') == 'ready' ? 'selected' : '' }}>BELUM MENANG</option>
+                    <option value="winner" {{ request('status') == 'winner' ? 'selected' : '' }}>MENANG</option>
+                    <option value="gugur" {{ request('status') == 'gugur' ? 'selected' : '' }}>HANGUS</option>
+                </select>
+            </div>
+
+            <div class="col-12 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-modern btn-modern-primary w-100 py-2">
+                    Filter
+                </button>
+                @if(request()->has('search') || request()->has('plant') || request()->has('status'))
+                    <a href="{{ request()->url() }}" class="btn btn-light border py-2 text-secondary" title="Reset Filter">
+                        <i class="fas fa-times"></i>
+                    </a>
+                @endif
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container">
+
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th class="ps-3" width="120">NPK</th>
+                    <th>Nama</th>
+                    <th>Seksi / Departemen</th>
+                    <th>Plant Terdaftar</th>
+                    <th class="text-center" width="120">Status Undian</th>
+                    <th class="text-center" width="100">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($peserta as $p)
+                <tr>
+                    <td class="fw-bold ps-3 text-secondary">{{ $p->npk }}</td>
+                    <td class="fw-semibold text-dark">{{ $p->nama_karyawan }}</td>
+                    <td>{{ $p->seksi }}</td>
+                    <td><span class="badge bg-light border text-secondary px-2 py-1 rounded">{{ $p->plant }}</span></td>
+                    <td class="text-center">
+                        @if($p->is_winner == 2)
+                            <span class="badge badge-status bg-danger-subtle text-danger border border-danger">
+                                <i class="fas fa-user-times me-1"></i> GUGUR
+                            </span>
+                        @elseif($p->is_winner == 1)
+                            <span class="badge badge-status bg-success-subtle text-success border border-success">
+                                <i class="fas fa-trophy me-1"></i> MENANG
+                            </span>
+                        @else
+                            <span class="badge badge-status bg-light text-muted border text-uppercase">
+                            BELUM MENANG
+                            </span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-1">
+                            <button type="button" class="action-icon action-edit btn-edit-peserta"
+                                    data-id="{{ $p->id }}"
+                                    data-npk="{{ $p->npk }}"
+                                    data-nama="{{ $p->nama_karyawan }}"
+                                    data-seksi="{{ $p->seksi }}"
+                                    data-plant="{{ $p->plant }}"
+                                    title="Edit Peserta">
+                                <i class="fas fa-edit"></i>
+                            </button>
+
+                            <form action="{{ route('peserta.destroy', $p->id) }}" method="POST" class="d-inline">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="action-icon action-delete" onclick="return confirm('Hapus karyawan ini?')">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-5 small">
+                        <i class="fas fa-folder-open d-block fs-3 text-slate-300 mb-2"></i> Data peserta kosong atau tidak ditemukan dengan filter tersebut. Gunakan fitur Tambah Manual atau Import CSV.
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
 
     <div class="main-card">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">

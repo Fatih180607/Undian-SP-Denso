@@ -15,6 +15,7 @@ class PesertaUndian extends Model
         'nama_karyawan',
         'seksi',
         'plant',
-        'is_winner'
+        'is_winner',
+        'hadiah_id' // <--- TAMBAHKAN INI
     ];
 }
