@@ -146,4 +146,5 @@ class HadiahController extends Controller
         $hadiah->delete();
         return redirect()->back()->with('success', 'Hadiah berhasil dihapus dari sistem!');
     }
+
 }

@@ -453,7 +453,7 @@ $(document).ready(function() {
     let listPemenangSah = [];
     let currentPemenangData = null;
     let totalKuotaUndian = parseInt("{{ $totalKuota }}") || 0;
-    let jenisKategori = 'all_plant';
+  let kategoriUndianAktif = "{{ $jenisKategoriUndian }}";
 
     const audioSpin = new Audio("{{ asset('audio/spin.mp3') }}");
     audioSpin.loop = true;
@@ -516,7 +516,8 @@ $(document).ready(function() {
                 if(response.success) {
                     let pemenangRaw = response.data_pemenang;
                     currentPemenangData = Array.isArray(pemenangRaw) ? pemenangRaw[0] : pemenangRaw;
-                    jenisKategori = response.kategori_undian || 'all_plant';
+                    kategoriUndianAktif = response.kategori_undian || kategoriUndianAktif;
+                    console.log("Kategori diupdate menjadi:", kategoriUndianAktif);
 
                     setTimeout(function() {
                         audioSpin.pause();
@@ -608,91 +609,116 @@ $(document).ready(function() {
         }
     });
 
-    $('#btnLihatSummary').click(function() {
-        if (currentPemenangData) {
-            listPemenangSah.push(currentPemenangData);
-            currentPemenangData = null;
-        }
+ $('#btnLihatSummary').click(function() {
+    if (currentPemenangData) {
+        listPemenangSah.push(currentPemenangData);
+        currentPemenangData = null;
+    }
 
-        audioSelesai.currentTime = 0;
-        audioSelesai.play().catch(e => console.log(e));
+    // Audio & Styling
+    audioSelesai.currentTime = 0;
+    audioSelesai.play().catch(e => console.log(e));
 
-        $('#smJudulHadiah').text($('#namaHadiah').text().trim());
-        $('#smKuotaHadiah').text($('#totalHadiah').text().trim());
-        $('#smFotoHadiah').attr('src', $('#gambarHadiah').attr('src'));
-        $('#boxSummaryPemenang').css('background-image', 'url("{{ asset('/images/bg_menang.png') }}")');
+    $('#smJudulHadiah').text($('#namaHadiah').text().trim());
+    $('#smKuotaHadiah').text($('#totalHadiah').text().trim());
+    $('#smFotoHadiah').attr('src', $('#gambarHadiah').attr('src'));
+    $('#boxSummaryPemenang').css('background-image', 'url("{{ asset('/images/bg_menang.png') }}")');
 
-        if (jenisKategori.trim().toLowerCase() === 'per_plant') {
-            let grupPlant = {};
+    let kategoriBersih = kategoriUndianAktif.toString().trim().toLowerCase();
 
-            listPemenangSah.forEach(p => {
-                let namaPlant = p.plant.toUpperCase().trim();
-                if (namaPlant === 'BEKASI' || namaPlant === 'SUNTER') {
-                    namaPlant = 'BEKASI & SUNTER';
-                }
-                if (!grupPlant[namaPlant]) grupPlant[namaPlant] = [];
-                grupPlant[namaPlant].push(p);
-            });
+    if (kategoriBersih === 'per_plant') {
+        let grupPlant = {};
 
-            let htmlPerPlant = `<div class="row g-4 justify-content-center align-items-start">`;
-            Object.keys(grupPlant).forEach(plantName => {
-                if (plantName === 'BEKASI & SUNTER') {
+        // 1. Kelompokkan Data
+        listPemenangSah.forEach(p => {
+            let namaPlant = p.plant ? p.plant.toUpperCase().trim() : 'LAINNYA';
+
+            // Penggabungan BEKASI & SUNTER
+            if (namaPlant === 'BEKASI' || namaPlant === 'SUNTER') {
+                namaPlant = 'BEKASI & SUNTER';
+            }
+
+            if (!grupPlant[namaPlant]) grupPlant[namaPlant] = [];
+            grupPlant[namaPlant].push(p);
+        });
+
+        // 2. Sort/Urutkan Group sesuai keinginan (Fajar -> Taci -> Bekasi & Sunter)
+        let urutanGrup = ['FAJAR', 'TACI', 'BEKASI & SUNTER'];
+        let grupTerurut = {};
+
+        // Masukkan yang ada di urutan wajib
+        urutanGrup.forEach(namaGrup => {
+            if (grupPlant[namaGrup]) {
+                grupTerurut[namaGrup] = grupPlant[namaGrup];
+            }
+        });
+
+        // Masukkan sisanya (jika ada plant lain)
+        Object.keys(grupPlant).forEach(namaGrup => {
+            if (!urutanGrup.includes(namaGrup)) {
+                grupTerurut[namaGrup] = grupPlant[namaGrup];
+            }
+        });
+
+        // 3. Render HTML
+        let htmlPerPlant = `<div class="row g-4 justify-content-center align-items-start">`;
+
+        Object.keys(grupTerurut).forEach(plantName => {
+            if (plantName === 'BEKASI & SUNTER') {
+                htmlPerPlant += `
+                    <div class="col-md-6 kolom-grup-plant text-center">
+                        <div class="title-grup-plant">${plantName}</div>
+                        <div class="d-flex flex-row gap-3 justify-content-center">`;
+                grupTerurut[plantName].forEach(pemenang => {
                     htmlPerPlant += `
-                        <div class="col-md-6 kolom-grup-plant text-center">
-                            <div class="title-grup-plant">${plantName}</div>
-                            <div class="d-flex flex-row gap-3 justify-content-center">
-                    `;
-                    grupPlant[plantName].forEach(pemenang => {
-                        htmlPerPlant += `
-                            <div class="card-pemenang-putih w-100">
-                                <p class="sm-npk">${pemenang.npk}</p>
-                                <p class="sm-nama">${pemenang.nama_karyawan.toUpperCase()}</p>
-                                <p class="sm-seksi">${pemenang.seksi.toUpperCase()}</p>
-                                <p class="sm-plant">${pemenang.plant.toUpperCase()}</p>
-                            </div>
-                        `;
-                    });
-                    htmlPerPlant += `</div></div>`;
-                } else {
-                    htmlPerPlant += `
-                        <div class="col-md-3 kolom-grup-plant text-center">
-                            <div class="title-grup-plant">${plantName}</div>
-                    `;
-                    grupPlant[plantName].forEach(pemenang => {
-                        htmlPerPlant += `
-                            <div class="card-pemenang-putih mb-3 w-100">
-                                <p class="sm-npk">${pemenang.npk}</p>
-                                <p class="sm-nama">${pemenang.nama_karyawan.toUpperCase()}</p>
-                                <p class="sm-seksi">${pemenang.seksi.toUpperCase()}</p>
-                                <p class="sm-plant">${pemenang.plant.toUpperCase()}</p>
-                            </div>
-                        `;
-                    });
-                    htmlPerPlant += `</div>`;
-                }
-            });
-            htmlPerPlant += `</div>`;
-            $('#containerHasilSummary').html(htmlPerPlant);
-
-        } else {
-            let htmlAllPlant = `<div class="row row-cols-1 row-cols-md-4 g-4 justify-content-center">`;
-            listPemenangSah.forEach(pemenang => {
-                htmlAllPlant += `
-                    <div class="col">
-                        <div class="card-pemenang-putih">
+                        <div class="card-pemenang-putih w-100">
                             <p class="sm-npk">${pemenang.npk}</p>
                             <p class="sm-nama">${pemenang.nama_karyawan.toUpperCase()}</p>
                             <p class="sm-seksi">${pemenang.seksi.toUpperCase()}</p>
                             <p class="sm-plant">${pemenang.plant.toUpperCase()}</p>
-                        </div>
-                    </div>`;
-            });
-            htmlAllPlant += `</div>`;
-            $('#containerHasilSummary').html(htmlAllPlant);
-        }
+                        </div>`;
+                });
+                htmlPerPlant += `</div></div>`;
+            } else {
+                htmlPerPlant += `
+                    <div class="col-md-3 kolom-grup-plant text-center">
+                        <div class="title-grup-plant">${plantName}</div>`;
+                grupTerurut[plantName].forEach(pemenang => {
+                    htmlPerPlant += `
+                        <div class="card-pemenang-putih mb-3 w-100">
+                            <p class="sm-npk">${pemenang.npk}</p>
+                            <p class="sm-nama">${pemenang.nama_karyawan.toUpperCase()}</p>
+                            <p class="sm-seksi">${pemenang.seksi.toUpperCase()}</p>
+                            <p class="sm-plant">${pemenang.plant.toUpperCase()}</p>
+                        </div>`;
+                });
+                htmlPerPlant += `</div>`;
+            }
+        });
 
-        $('#boxSummaryPemenang').removeClass('d-none').hide().fadeIn(600);
-    });
+        htmlPerPlant += `</div>`;
+        $('#containerHasilSummary').html(htmlPerPlant);
+
+    } else {
+        // Mode ALL_PLANT tetap sama
+        let htmlAllPlant = `<div class="row row-cols-1 row-cols-md-4 g-4 justify-content-center">`;
+        listPemenangSah.forEach(pemenang => {
+            htmlAllPlant += `
+                <div class="col">
+                    <div class="card-pemenang-putih">
+                        <p class="sm-npk">${pemenang.npk}</p>
+                        <p class="sm-nama">${pemenang.nama_karyawan.toUpperCase()}</p>
+                        <p class="sm-seksi">${pemenang.seksi.toUpperCase()}</p>
+                        <p class="sm-plant">${pemenang.plant.toUpperCase()}</p>
+                    </div>
+                </div>`;
+        });
+        htmlAllPlant += `</div>`;
+        $('#containerHasilSummary').html(htmlAllPlant);
+    }
+
+    $('#boxSummaryPemenang').removeClass('d-none').hide().fadeIn(600);
+});
 
     $('#btnDownloadSummary').click(function() {
         const targetElement = document.getElementById('boxSummaryPemenang');

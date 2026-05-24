@@ -151,7 +151,9 @@ class UndianController extends Controller
                 : $hadiahAktif->kuotaPerPlant->sum('jumlah_pemenang');
         }
 
-        return view('undian_screen', compact('hadiah', 'hadiahAktif', 'totalKuota'));
+        $jenisKategoriUndian = $hadiahAktif->tipe_hadiah;
+
+        return view('undian_screen', compact('hadiah', 'hadiahAktif', 'totalKuota', 'jenisKategoriUndian'));
     }
 
     /**
@@ -325,88 +327,106 @@ class UndianController extends Controller
             return response()->json(['success' => false, 'message' => 'Gagal memproses undian: ' . $e->getMessage()]);
         }
     }
+public function kocokSatuSlot(Request $request)
+{
+    $hadiahId = $request->hadiah_id;
+    $hadiah = Hadiah::find($hadiahId);
 
-    /**
-     * Logika Mengacak HANYA 1 Nama Berdasarkan Slot Antrean Panggung Aktif
-     */
-  /**
-     * Logika Mengacak 1 Nama (Satu-Slot)
-     */
-    public function kocokSatuSlot(Request $request)
-    {
-        $hadiahId = $request->hadiah_id;
-        $hadiah = Hadiah::find($hadiahId);
+    if (!$hadiah) {
+        return response()->json(['success' => false, 'message' => 'Data hadiah tidak ditemukan!']);
+    }
 
-        if (!$hadiah) {
-            return response()->json(['success' => false, 'message' => 'Data hadiah tidak ditemukan!']);
+    // 1. Logika Ketersediaan Kandidat
+    if ($hadiah->tipe_hadiah == 'all_plant') {
+        $queryKandidat = PesertaUndian::where('is_winner', 0)->where('hadiah_id', 0);
+
+        if ($queryKandidat->count() <= 0) {
+            return response()->json(['success' => false, 'message' => 'Peserta sudah habis!'], 422);
         }
+    } else {
+        // Logic Per Plant dengan Prioritas
+        $allKuota = DB::table('hadiah_kuota')->where('hadiah_id', $hadiahId)->where('jumlah_pemenang', '>', 0)->get();
 
-        // 1. Logika Ketersediaan Kandidat
-        // Filter: is_winner = 0 (Belum menang) DAN hadiah_id = 0 (Belum pernah diundi)
-        if ($hadiah->tipe_hadiah == 'all_plant') {
-            $queryKandidat = PesertaUndian::where('is_winner', 0)->where('hadiah_id', 0);
+        // --- KONFIGURASI PRIORITAS ---
+        $urutanPrioritas = ['FAJAR', 'TACI', 'BEKASI & SUNTER'];
+        $gabunganPlants = ['BEKASI', 'SUNTER'];
 
-            if ($queryKandidat->count() <= 0) {
-                return response()->json(['success' => false, 'message' => 'Peserta sudah habis!'], 422);
-            }
-        } else {
-            // Logic Per Plant
-            $allKuota = DB::table('hadiah_kuota')->where('hadiah_id', $hadiahId)->where('jumlah_pemenang', '>', 0)->get();
-            $gabunganPlants = ['BEKASI', 'SUNTER'];
+        $kuotaBekasiSunter = 0;
+        $pemenangBekasiSunter = 0;
+        $listPlantDitemukan = [];
 
-            // Hitung sisa kuota
-            $plantTersedia = [];
-            foreach ($allKuota as $kp) {
-                $pName = strtoupper(trim($kp->target_plant));
-                $pemenangPlantIni = PesertaUndian::where('hadiah_id', $hadiahId)
-                                    ->where(DB::raw('UPPER(TRIM(plant))'), $pName)
-                                    ->count();
+        // Loop untuk menghitung sisa kuota masing-masing
+        foreach ($allKuota as $kp) {
+            $pName = strtoupper(trim($kp->target_plant));
 
+            $pemenangPlantIni = PesertaUndian::where('hadiah_id', $hadiahId)
+                                            ->where(DB::raw('UPPER(TRIM(plant))'), $pName)
+                                            ->count();
+
+            if (in_array($pName, $gabunganPlants)) {
+                $kuotaBekasiSunter += $kp->jumlah_pemenang;
+                $pemenangBekasiSunter += $pemenangPlantIni;
+            } else {
                 if ($pemenangPlantIni < $kp->jumlah_pemenang) {
-                    $plantTersedia[] = $pName;
+                    $listPlantDitemukan[$pName] = true;
                 }
             }
-
-            if (empty($plantTersedia)) {
-                return response()->json(['success' => false, 'message' => 'Kuota per plant habis!'], 422);
-            }
-
-            $queryKandidat = PesertaUndian::where('is_winner', 0)
-                                          ->where('hadiah_id', 0)
-                                          ->whereIn(DB::raw('UPPER(TRIM(plant))'), $plantTersedia);
         }
 
-        // 2. Eksekusi Update
-        DB::beginTransaction();
-        try {
-            $terpilih = $queryKandidat->inRandomOrder()->first();
-
-            if (!$terpilih) {
-                DB::rollBack();
-                return response()->json(['success' => false, 'message' => 'Tidak ada karyawan tersedia!']);
-            }
-
-            $terpilih->update([
-                'is_winner' => 1,
-                'hadiah_id' => $hadiahId
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'data_pemenang' => [
-                    'npk' => $terpilih->npk,
-                    'nama_karyawan' => $terpilih->nama_karyawan,
-                    'seksi' => $terpilih->seksi,
-                    'plant' => $terpilih->plant
-                ]
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['success' => false, 'message' => 'Gagal: ' . $e->getMessage()]);
+        // Tambahkan grup Bekasi & Sunter ke list jika masih ada kuota gabungan
+        if ($pemenangBekasiSunter < $kuotaBekasiSunter) {
+            $listPlantDitemukan['BEKASI & SUNTER'] = true;
         }
+
+        // Tentukan plant mana yang akan diundi berdasarkan prioritas
+        $plantTersedia = [];
+        foreach ($urutanPrioritas as $p) {
+            if (isset($listPlantDitemukan[$p])) {
+                $plantTersedia = ($p === 'BEKASI & SUNTER') ? ['BEKASI', 'SUNTER'] : [$p];
+                break; // Ambil prioritas pertama yang masih punya kuota
+            }
+        }
+
+        if (empty($plantTersedia)) {
+            return response()->json(['success' => false, 'message' => 'Kuota per plant habis!'], 422);
+        }
+
+        $queryKandidat = PesertaUndian::where('is_winner', 0)
+                                        ->where('hadiah_id', 0)
+                                        ->whereIn(DB::raw('UPPER(TRIM(plant))'), $plantTersedia);
     }
+
+    // 2. Eksekusi Update
+    DB::beginTransaction();
+    try {
+        $terpilih = $queryKandidat->inRandomOrder()->first();
+
+        if (!$terpilih) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Tidak ada karyawan tersedia!']);
+        }
+
+        $terpilih->update([
+            'is_winner' => 1,
+            'hadiah_id' => $hadiahId
+        ]);
+
+        DB::commit();
+
+        return response()->json([
+            'success' => true,
+            'data_pemenang' => [
+                'npk' => $terpilih->npk,
+                'nama_karyawan' => $terpilih->nama_karyawan,
+                'seksi' => $terpilih->seksi,
+                'plant' => $terpilih->plant
+            ]
+        ]);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json(['success' => false, 'message' => 'Gagal: ' . $e->getMessage()]);
+    }
+}
 
     /**
      * Mengubah status peserta menjadi Gugur total (is_winner = 2) via AJAX
